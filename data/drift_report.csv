@@ -1,0 +1,4 @@
+entity_id,entity_type,n_sessions,drifted_features,max_drift_z,drift_severity,recommendation
+SVC_0090,service_account,667,cmd_rarity_score,3.22,medium,Monitor — legitimate behaviour change suspected
+USR_0006,user,643,failed_auth_rate_10,2.37,medium,Monitor — legitimate behaviour change suspected
+USR_0064,user,643,resource_diversity_10,2.28,medium,Monitor — legitimate behaviour change suspected
