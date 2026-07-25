@@ -1,0 +1,22 @@
+# Virtual environment
+venv/
+env/
+ENV/
+
+# Python cache & test files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Internal planning & presentation files (local only)
+hackathon_plan.md
+pipeline_status.md
+slides/
+honey_hack_submission.zip
+
+# IDE & OS metadata
+.DS_Store
+.vscode/
+.idea/
