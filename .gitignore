@@ -10,11 +10,13 @@ __pycache__/
 *.pyd
 .pytest_cache/
 
-# Internal planning & presentation files (local only)
+# Internal planning, presentation & package build files (local only)
 hackathon_plan.md
 pipeline_status.md
 slides/
 honey_hack_submission.zip
+SamarthSingh_UEBA_HoneywellHackathon_Source/
+populate_package.py
 
 # IDE & OS metadata
 .DS_Store

@@ -1,107 +1,127 @@
-# 🛡️ AI-Powered Behavioral Anomaly Detection
-
-**Honeywell Hackathon 2026 · Solo entry · 32-hour window**
-
-A full UEBA (User and Entity Behavior Analytics) pipeline that detects and explains insider threats and behavioral anomalies using a two-stage AI approach.
+# 🛡️ AI-Powered Behavioral Anomaly Detection for Cybersecurity
+**Honeywell Hackathon 2026 Submission**
 
 ---
 
-## Quick Start
+## 🎯 What it does
+
+This User and Entity Behavior Analytics (UEBA) production-oriented prototype detects insider threats across multi-entity telemetry (users, service accounts, IoT edge devices) without relying on pre-labeled attack data during anomaly detection. It employs **Isolation Forest** as its primary operational anomaly detector selected by held-out PR-AUC benchmarking, a **Random Forest Classifier** to categorize flagged alerts into 6 specific attack vectors with a 0.98 weighted F1-score, and a **Two-Tier Explainability Engine** that pairs detector policy feature evidence with Shapley attributions (TreeExplainer SHAP) for full threat transparency.
+
+---
+
+## 📋 Hackathon Deliverables Mapped
+
+| Required Deliverable | Repository Evidence | Status |
+|---|---|---|
+| **1. Synthetic Telemetry Generator** | [`src/01_data_generator.py`](file:///d:/honey_hack/src/01_data_generator.py), [`data/sample_labeled_evaluation_data.csv`](file:///d:/honey_hack/data/sample_labeled_evaluation_data.csv) | ✅ 77,896 sessions generated |
+| **2. Behavioral Baseline Profiler** | [`src/02_feature_engineering.py`](file:///d:/honey_hack/src/02_feature_engineering.py), [`src/03_isolation_forest.py`](file:///d:/honey_hack/src/03_isolation_forest.py) | ✅ 18 rolling features |
+| **3. Sequential & Tabular Detection** | [`src/03_isolation_forest.py`](file:///d:/honey_hack/src/03_isolation_forest.py), [`src/04_bilstm_autoencoder.py`](file:///d:/honey_hack/src/04_bilstm_autoencoder.py), [`outputs/ablation_table.csv`](file:///d:/honey_hack/outputs/ablation_table.csv) | ✅ IF primary + BiLSTM extension |
+| **4. Multi-Class Threat Classifier** | [`src/05_classifier.py`](file:///d:/honey_hack/src/05_classifier.py), [`models/classifier.pkl`](file:///d:/honey_hack/models/classifier.pkl), [`outputs/classifier_confusion.png`](file:///d:/honey_hack/outputs/classifier_confusion.png) | ✅ Weighted F1 = 0.9800 |
+| **5. Two-Tier Explainable AI (XAI)** | [`src/06_explainability.py`](file:///d:/honey_hack/src/06_explainability.py), [`outputs/shap_plots/`](file:///d:/honey_hack/outputs/shap_plots/), [`data/alerts_with_explanations.csv`](file:///d:/honey_hack/data/alerts_with_explanations.csv) | ✅ Policy evidence + SHAP attributions |
+| **6. Cold-Start & Concept Drift Adaptation** | [`src/07_cold_start_drift.py`](file:///d:/honey_hack/src/07_cold_start_drift.py), [`data/cold_start_entities.csv`](file:///d:/honey_hack/data/cold_start_entities.csv), [`data/drift_report.csv`](file:///d:/honey_hack/data/drift_report.csv) | ✅ Population fallback & exponential decay |
+| **7. Interactive Analyst Dashboard** | [`dashboard/dashboard.py`](file:///d:/honey_hack/dashboard/dashboard.py), [`validate_submission.py`](file:///d:/honey_hack/validate_submission.py), [`tests/test_validate_submission.py`](file:///d:/honey_hack/tests/test_validate_submission.py) | ✅ Ranked queue, demo mode & zero leakage |
+
+---
+
+## ⚡ Quick Start
 
 ```bash
-# 1. Install dependencies
+# 1. Environment setup
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
-# 2. Run the full pipeline
+# 2. Run the end-to-end pipeline
 python run_all.py
 
-# 3. Launch the dashboard
+# 3. Launch interactive analyst console
 streamlit run dashboard/dashboard.py
 ```
 
 ---
 
-## Architecture
-
-```
-Synthetic Data → Feature Engineering → Isolation Forest (tabular)
-                                     + BiLSTM Autoencoder (sequences)
-                                     → Blended Risk Score
-                                     → RandomForest Classifier (attack type)
-                                     → SHAP Explanations
-                                     → Streamlit Dashboard
-```
-
----
-
-## Project Structure
-
-```
-honey_hack/
-├── src/
-│   ├── 01_data_generator.py       # Phase 1: Synthetic UEBA data + 7 attack types
-│   ├── 02_feature_engineering.py  # Phase 2: 17 tabular features + LSTM sequences
-│   ├── 03_isolation_forest.py     # Phase 3: Baseline anomaly scoring
-│   ├── 04_bilstm_autoencoder.py   # Phase 4: Sequence-aware detection (GPU)
-│   ├── 05_classifier.py           # Phase 5: Attack type classification
-│   ├── 06_explainability.py       # Phase 6: SHAP + human-readable explanations
-│   └── 07_cold_start_drift.py     # Phase 7: Cold-start & concept drift
-├── dashboard/
-│   └── dashboard.py               # Phase 8: Streamlit analyst dashboard
-├── data/                          # Generated CSV files (created at runtime)
-├── models/                        # Trained models (created at runtime)
-├── outputs/                       # Plots and charts (created at runtime)
-│   └── shap_plots/
-├── docs/
-│   └── data_assumptions.md        # Auto-generated: attack taxonomy + schema
-├── run_all.py                     # Full pipeline runner
-└── requirements.txt
-```
-
----
-
-## Detected Attack Types
-
-| Attack | Label | Detection Mechanism |
-|---|---|---|
-| Brute Force | `brute_force` | Failed auth rate spike |
-| Impossible Travel | `impossible_travel` | Geo-velocity > 900 km/h |
-| Credential Stuffing | `credential_stuffing` | Population-level IP clustering |
-| Lateral Movement | `lateral_movement` | Resource diversity spike |
-| Device Spoofing | `device_spoofing` | Fingerprint inconsistency |
-| Low-and-Slow Exfiltration | `low_and_slow_exfiltration` | Long-window off-hours trend |
-| **Insider Drift** | **`edge_case`** | **Threshold calibration only — not attack** |
-
----
-
-## Key Design Decisions
-
-- **BiLSTM over plain LSTM**: Past+future context per command token → better reconstruction quality at no extra GPU cost
-- **Train on normal only**: Both unsupervised models (IF + LSTM-AE) train exclusively on normal sessions — no labels needed at detection time
-- **99th-percentile threshold**: Corresponds to top 1% alert budget — maps directly to analyst capacity
-- **PR-AUC primary metric**: At 2% anomaly rate, ROC-AUC is misleading; PR-AUC is the honest metric
-- **Insider Drift as `edge_case`**: Used to tune false-positive threshold, not treated as an attack target
-- **Two dataset versions**: `data_with_labels.csv` for training; `data_for_inference.csv` simulates production (no labels)
-
----
-
-## Pipeline Runner Options
+## 🧪 Validation & No-Leakage Verification
 
 ```bash
-python run_all.py                  # Run all phases (skips if output exists)
-python run_all.py --phase 4        # Run only Phase 4
-python run_all.py --from 3         # Run from Phase 3 onward
-python run_all.py --force          # Re-run all phases even if output exists
+# Run standalone submission & no-leakage verification
+python validate_submission.py
+
+# Run pytest test suite
+pytest -q
 ```
 
 ---
 
-## Requirements
+## 📊 Key Results
 
-- Python 3.10+
-- GPU (optional but recommended for Phase 4 — CUDA-enabled TensorFlow)
-- See `requirements.txt` for full dependency list
+- **Primary Operational Detector**: Isolation Forest (selected by held-out PR-AUC)
+- **PR-AUC**: **0.3380** *(vs 0.0095 for BiLSTM-AE and 0.2811 for Blended)*
+- **Headline Top 1.0% Alert Budget**: **779 queued alerts** out of 77,896 sessions
+- **Precision@1%**: **34.92%**
+- **Recall@1%**: **42.77%**
+- **F1-Score@1%**: **0.3845**
+- **Attack Classifier**: **Macro F1 = 0.94**, **Weighted F1 = 0.98** across 5-fold cross-validation
 
 ---
 
-*Stack: numpy · pandas · faker · scikit-learn · tensorflow · shap · streamlit · plotly*
+## ⚠️ Limitations & Scope
+
+1. **Synthetic Data**: Telemetry is generated based on realistic entity profiles and Gaussian distribution shifts rather than live enterprise production logs.
+2. **Predefined Attack Taxonomy**: Attack classification is trained on 6 specific threat categories (Brute Force, Low & Slow Exfiltration, Lateral Movement, Impossible Travel, Credential Stuffing, Device Spoofing).
+3. **Batch Replay Prototype**: Scores event-by-event; batch replay format in this prototype rather than a live Apache Kafka streaming infrastructure.
+4. **Rare-Class Uncertainty**: Classifications for low-frequency attack types (e.g. Device Spoofing with 9 samples) exhibit wider confidence intervals.
+
+---
+
+## 📁 Project Structure
+
+```text
+.
+├── README.md                          # Project documentation
+├── requirements.txt                   # Dependency list
+├── run_all.py                         # Master pipeline runner
+├── validate_submission.py             # Submission & no-leakage verification script
+├── .gitignore                         # Environment & build exclusions
+│
+├── src/                               # Pipeline core python scripts (Phases 1-7)
+│   ├── 01_data_generator.py
+│   ├── 02_feature_engineering.py
+│   ├── 03_isolation_forest.py
+│   ├── 04_bilstm_autoencoder.py
+│   ├── 05_classifier.py
+│   ├── 06_explainability.py
+│   └── 07_cold_start_drift.py
+│
+├── dashboard/                         # Streamlit analyst console
+│   └── dashboard.py
+│
+├── tests/                             # Pytest test suite
+│   └── test_validate_submission.py
+│
+├── docs/                              # Technical design & evidence documentation
+│   ├── data_assumptions.md
+│   ├── threat_taxonomy.md
+│   ├── architecture.md
+│   ├── testing_evidence.md
+│   └── STREAMING_DESIGN.md
+│
+├── outputs/                           # Plots & evaluation artifacts
+│   ├── ablation_table.csv
+│   ├── classifier_confusion.png
+│   ├── pr_curve.png
+│   ├── if_feature_importance.png
+│   ├── dashboard_demo.png
+│   ├── cold_start_demo.png
+│   ├── drift_demo.png
+│   └── shap_plots/
+│
+├── data/                              # Telemetry datasets & CSV manifests
+│   ├── sample_inference_data.csv
+│   ├── sample_labeled_evaluation_data.csv
+│   └── DATA_README.md
+│
+└── models/                            # Saved model binary artifacts (.pkl & .keras)
+    ├── isolation_forest.pkl
+    ├── classifier.pkl
+    └── MODEL_README.md
+```

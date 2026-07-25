@@ -51,7 +51,7 @@ flowchart TD
     subgraph Classification & Two-Tier Explainability
         I --> J[Random Forest Attack Classifier]
         J --> K1[Tier 1: Detector Policy Evidence]
-        J --> K2[Tier 2: Attack-Type Attribution (SHAP)]
+        J --> K2["Tier 2: Attack-Type Attribution (SHAP)"]
     end
 
     subgraph Production Resilience & Dashboard
